@@ -1,0 +1,53 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: petrosa-usa-get-candles-h1
+spec:
+  schedule: "2 15-22 * * 1-5"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: petrosa-apps-jobs
+            image: yurisa2/petrosa-apps-jobs:v0.0.90
+            env:
+              - name: COL_NAME
+                value: "candles_h1"
+              - name: MINUTES
+                value: "60"
+              - name: INTERVAL
+                value: "1h"
+              - name: VERSION
+                value: "0.0.37"
+              - name: NEW_RELIC_APP_NAME
+                value: "petrosa-usa-get-candles-h1"
+              - name: MONGO_URI
+                valueFrom:
+                  secretKeyRef:
+                    name: petrosa-apps-secret
+                    key: MONGO_URI
+                    optional: false
+              - name: KAFKA_ADDRESS
+                valueFrom:
+                  secretKeyRef:
+                    name: petrosa-apps-secret
+                    key: KAFKA_ADDRESS
+                    optional: false
+              - name: NEW_RELIC_LICENSE_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: petrosa-apps-secret
+                    key: NEW_RELIC_LICENSE_KEY
+                    optional: false
+              - name: NEW_RELIC_LICENSE_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: petrosa-apps-secret
+                    key: NEW_RELIC_LICENSE_KEY
+                    optional: false
+
+            imagePullPolicy: Always
+            command: ["opentelemetry-instrument", "python"]
+            args: ["./petrosa_usa_get_candles/driver.py"]
+          restartPolicy: Never

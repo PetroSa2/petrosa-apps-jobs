@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: petrosa-crypto-binance-current-klines-1h-history
+spec:
+  schedule: "3 * * * *"
+  successfulJobsHistoryLimit: 0
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          activeDeadlineSeconds: 300
+          containers:
+          - name: petrosa-apps-jobs
+            image: yurisa2/petrosa-apps-jobs:v0.0.90
+            env:
+              - name: PERIOD
+                value: "1h"
+              - name: VERSION
+                value: "0.0.90"
+              - name: OTEL_SERVICE_NAME
+                value: "petrosa-crypto-binance-current-klines-1h-history"
+            envFrom:
+              - configMapRef:
+                  name: petrosa-apps-configmap
+
+            imagePullPolicy: Always
+            command: ["opentelemetry-instrument", "python"]
+            args: ["./petrosa_binance_current_klines/main.py"]
+          restartPolicy: Never

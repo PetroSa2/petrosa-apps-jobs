@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: petrosa-crypto-intraday-backfiller
+spec:
+  # schedule: "4,18,33,48 * * * *"
+  schedule: "1 1 1 1 1"
+  successfulJobsHistoryLimit: 0
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: petrosa.class
+                    operator: In
+                    values:
+                    - worker
+          containers:
+          - name: petrosa-apps-jobs
+            image: yurisa2/petrosa-apps-jobs:v0.0.90
+            env:
+              - name: VERSION
+                value: "0.0.90"
+              - name: OTEL_SERVICE_NAME
+                value: "petrosa-crypto-intraday-backfiller"
+            envFrom:
+              - configMapRef:
+                  name: petrosa-apps-configmap
+
+            imagePullPolicy: Always
+            command: ["opentelemetry-instrument", "python"]
+            args: ["./petrosa_crypto_intraday_backfiller/driver.py"]
+          restartPolicy: Never

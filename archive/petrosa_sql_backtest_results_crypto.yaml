@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: petrosa-sql-backtest-results-crypto
+spec:
+  schedule: "22 0 * * *"
+  successfulJobsHistoryLimit: 0
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          activeDeadlineSeconds: 21500
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: petrosa.class
+                    operator: In
+                    values:
+                    - worker
+          containers:
+          - name: petrosa-apps-jobs
+            image: yurisa2/petrosa-apps-jobs:v0.0.90
+            env:
+              - name: VERSION
+                value: "0.0.90"
+              - name: OTEL_SERVICE_NAME
+                value: "petrosa_sql_backtest_results_crypto"
+              - name: MARKET
+                value: "CRYPTO"
+            envFrom:
+            - configMapRef:
+                name: petrosa-apps-configmap
+
+          
+            imagePullPolicy: Always
+            command: ["opentelemetry-instrument", "python"]
+            args: ["./petrosa_sql_backtest_results/driver.py"]
+          restartPolicy: Never
